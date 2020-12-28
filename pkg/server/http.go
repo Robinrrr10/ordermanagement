@@ -16,5 +16,6 @@ func HttpServer() {
 		fmt.Fprintf(res, "UP")
 	})
 
+	http.HandleFunc("/store/", StoreOrder)
 	http.ListenAndServe(":7878", nil)
 }
