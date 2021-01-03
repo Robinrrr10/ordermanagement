@@ -3,6 +3,8 @@ package server
 import (
 	"fmt"
 	"net/http"
+
+	"../utils"
 )
 
 func HttpServer() {
@@ -17,5 +19,5 @@ func HttpServer() {
 	})
 
 	http.HandleFunc("/store/", StoreOrder)
-	http.ListenAndServe(":7878", nil)
+	http.ListenAndServe(":"+utils.ServerPort, nil)
 }
