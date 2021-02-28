@@ -4,12 +4,15 @@ import (
 	"database/sql"
 	"fmt"
 
+	"../utils"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func Connect() {
 	fmt.Println("Connecting to mysql...")
-	db, err := sql.Open("mysql", "apper:app123@tcp(192.168.222.62:3306)/business")
+	dbUrl := utils.DBuser + ":" + utils.DBpass + "@tcp(" + utils.DBhost + ":" + utils.DBport + ")/" + utils.DBname
+	//fmt.Println("DB URL is:" + dbUrl)
+	db, err := sql.Open("mysql", dbUrl)
 	defer db.Close()
 	if err != nil {
 		fmt.Println("ERROR: ", err)
