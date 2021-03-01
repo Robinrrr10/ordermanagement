@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"../dbUtils"
 	"../entities"
 )
 
@@ -45,11 +47,20 @@ func createOrder(storeId string, orderDetailRequest entities.OrderDetail) (order
 
 	fmt.Println("Product is:" + orderDetailRequest.ProductName)
 
-	//Call db to insert the value
+	query := "INSERT INTO orders (storeId, productId, productName, eachPrice, quantity, totalPrice) values (" + strconv.Itoa(orderDetailRequest.StoreId) + ", " + strconv.Itoa(orderDetailRequest.ProductId) + ", '" + orderDetailRequest.ProductName + "', " + strconv.FormatFloat(orderDetailRequest.EachPrice, 'f', 6, 64) + ", " + strconv.Itoa(orderDetailRequest.Quantity) + ", " + strconv.FormatFloat(orderDetailRequest.TotalPrice, 'f', 2, 64) + ");"
+	//valuee := strconv.Itoa(orderDetailRequest.StoreId)
+	//query := "INSERT INTO orders (storeId) values (" + valuee + ");"
+	result := dbUtils.Update(query)
+	id, err := result.LastInsertId()
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	fmt.Println("Inserted id is:" + strconv.FormatInt(id, 10))
 
 	orderResponse = entities.OrderResponse{}
 	status := entities.Status{StatusCode: 1001, Message: "Created successfully", Result: "SUCCESS"}
-	orderDetail := entities.OrderDetail{OrderId: 1001, ProductName: "Bullet belt"}
+	orderDetail := orderDetailRequest
+	orderDetail.OrderId = int(id)
 	var orderDetails [1]entities.OrderDetail
 	orderDetails[0] = orderDetail
 	orderResponse.Status = status

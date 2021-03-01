@@ -1,13 +1,13 @@
 package entities
 
 type OrderDetail struct {
-	OrderId            int     `json:"orderId"`
-	ProductId          int     `json:"productId"`
-	ProductName        string  `json:"productName"`
-	EachPrice          float32 `json:"eachPrice"`
-	Quantity           int     `json:"quantity"`
-	DiscountPercentage float32 `json:"discountPercentage"`
-	TotalPrice         float32 `json:"totalPrice"`
+	OrderId     int     `json:"orderId"`
+	StoreId     int     `json:"storeId"`
+	ProductId   int     `json:"productId"`
+	ProductName string  `json:"productName"`
+	EachPrice   float64 `json:"eachPrice"`
+	Quantity    int     `json:"quantity"`
+	TotalPrice  float64 `json:"totalPrice"`
 }
 
 type Status struct {
