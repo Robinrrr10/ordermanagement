@@ -26,7 +26,10 @@ func StoreOrder(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusCreated)
 		json.NewEncoder(res).Encode(orderResponse)
 	} else if req.Method == "GET" && orderId == "all" && storeId != "" {
-		fmt.Fprintf(res, "get all orders")
+		orderResponse := getAllOrders(storeId)
+		res.Header().Set("Content-Type", "application/json")
+		res.WriteHeader(http.StatusCreated)
+		json.NewEncoder(res).Encode(orderResponse)
 	} else if (req.Method == "GET" || req.Method == "PUT" || req.Method == "DELETE") && orderId != "" && storeId != "" {
 		switch req.Method {
 		case http.MethodGet:
@@ -38,20 +41,90 @@ func StoreOrder(res http.ResponseWriter, req *http.Request) {
 			}
 
 		case http.MethodPut:
-			fmt.Fprintf(res, "order id is there, edit order detail")
+			{
+				body, _ := ioutil.ReadAll(req.Body)
+				fmt.Println("body is:" + string(body))
+				var orderDetail entities.OrderDetail
+				json.Unmarshal(body, &orderDetail)
+				orderResponse := modifyOrder(storeId, orderId, orderDetail)
+				res.Header().Set("Content-Type", "application/json")
+				res.WriteHeader(http.StatusCreated)
+				json.NewEncoder(res).Encode(orderResponse)
+			}
+
 		case http.MethodDelete:
-			fmt.Fprintf(res, "order id is there, delete order")
+			{
+				orderResponse := removeOrder(storeId, orderId)
+				res.Header().Set("Content-Type", "application/json")
+				res.WriteHeader(http.StatusCreated)
+				json.NewEncoder(res).Encode(orderResponse)
+			}
 		default:
-			fmt.Fprintf(res, "Invalid method")
+			{
+				orderResponse := entities.OrderResponse{}
+				errStatus := entities.Status{StatusCode: 2001, Message: "Invalid request", Result: "ERROR"}
+				orderResponse.Status = errStatus
+				res.Header().Set("Content-Type", "application/json")
+				res.WriteHeader(http.StatusCreated)
+				json.NewEncoder(res).Encode(orderResponse)
+			}
 		}
 	} else {
-		fmt.Fprintf(res, "Invalid request")
+		orderResponse := entities.OrderResponse{}
+		errStatus := entities.Status{StatusCode: 2001, Message: "Invalid request", Result: "ERROR"}
+		orderResponse.Status = errStatus
+		res.Header().Set("Content-Type", "application/json")
+		res.WriteHeader(http.StatusCreated)
+		json.NewEncoder(res).Encode(orderResponse)
 	}
 }
 
 func createOrder(storeId string, orderDetailRequest entities.OrderDetail) (orderResponse entities.OrderResponse) {
 
 	query := "INSERT INTO orders (storeId, productId, productName, eachPrice, quantity, totalPrice) values (" + strconv.Itoa(orderDetailRequest.StoreId) + ", " + strconv.Itoa(orderDetailRequest.ProductId) + ", '" + orderDetailRequest.ProductName + "', " + strconv.FormatFloat(orderDetailRequest.EachPrice, 'f', 6, 64) + ", " + strconv.Itoa(orderDetailRequest.Quantity) + ", " + strconv.FormatFloat(orderDetailRequest.TotalPrice, 'f', 2, 64) + ");"
+
+	result := dbUtils.Update(query)
+	id, err := result.LastInsertId()
+	if err != nil {
+		fmt.Println("Error:", err)
+		orderResponse = entities.OrderResponse{}
+		errStatus := entities.Status{StatusCode: 2001, Message: "Failed while creating the order", Result: "ERROR"}
+		orderResponse.Status = errStatus
+	} else {
+		fmt.Println("Inserted id is:" + strconv.FormatInt(id, 10))
+		orderResponse = entities.OrderResponse{}
+		status := entities.Status{StatusCode: 1001, Message: "Created successfully", Result: "SUCCESS"}
+		orderDetail := orderDetailRequest
+		orderDetail.OrderId = int(id)
+		var orderDetails [1]entities.OrderDetail
+		orderDetails[0] = orderDetail
+		orderResponse.Status = status
+		orderResponse.Slice = orderDetails[:]
+	}
+	return
+}
+
+func modifyOrder(storeId string, orderId string, orderDetailRequest entities.OrderDetail) (orderResponse entities.OrderResponse) {
+
+	availableOrderDetail := getOrderDetail(storeId, orderId)
+
+	if orderDetailRequest.ProductId == 0 {
+		orderDetailRequest.ProductId = availableOrderDetail.Slice[0].ProductId
+	}
+	if orderDetailRequest.ProductName == "" {
+		orderDetailRequest.ProductName = availableOrderDetail.Slice[0].ProductName
+	}
+	if orderDetailRequest.EachPrice == 0 {
+		orderDetailRequest.EachPrice = availableOrderDetail.Slice[0].EachPrice
+	}
+	if orderDetailRequest.Quantity == 0 {
+		orderDetailRequest.Quantity = availableOrderDetail.Slice[0].Quantity
+	}
+	if orderDetailRequest.TotalPrice == 0 {
+		orderDetailRequest.TotalPrice = availableOrderDetail.Slice[0].TotalPrice
+	}
+
+	query := "UPDATE orders SET productId=" + strconv.Itoa(orderDetailRequest.ProductId) + ", productName='" + orderDetailRequest.ProductName + "', eachPrice=" + strconv.FormatFloat(orderDetailRequest.EachPrice, 'f', 6, 64) + ", quantity=" + strconv.Itoa(orderDetailRequest.Quantity) + ", totalPrice=" + strconv.FormatFloat(orderDetailRequest.TotalPrice, 'f', 2, 64) + " WHERE storeId='" + storeId + "' AND id='" + orderId + "';"
 
 	result := dbUtils.Update(query)
 	id, err := result.LastInsertId()
@@ -85,15 +158,6 @@ func getOrderDetail(storeId string, orderId string) entities.OrderResponse {
 			status := entities.Status{StatusCode: 2002, Message: err.Error(), Result: "ERROR"}
 			orderResponse.Status = status
 		} else {
-			//fmt.Println("Product name is:", val[3])
-			//orderDetail := entities.OrderDetail{}
-			//orderDetail.OrderId, _ = strconv.Atoi(val[0])
-			//orderDetail.StoreId, _ = strconv.Atoi(val[1])
-			//orderDetail.ProductId, _ = strconv.Atoi(val[2])
-			//orderDetail.ProductName = val[3]
-			//orderDetail.EachPrice, _ = strconv.ParseFloat(val[4], 64)
-			//orderDetail.Quantity, _ = strconv.Atoi(val[5])
-			//orderDetail.TotalPrice, _ = strconv.ParseFloat(val[6], 64)
 			var orderDetails [1]entities.OrderDetail
 			orderDetails[0] = orderDetail
 			status := entities.Status{StatusCode: 1002, Message: "Fetched order detail successfully", Result: "SUCCESS"}
@@ -102,6 +166,58 @@ func getOrderDetail(storeId string, orderId string) entities.OrderResponse {
 		}
 	} else {
 		status := entities.Status{StatusCode: 2003, Message: "Error when fetching order detail", Result: "ERROR"}
+		orderResponse.Status = status
+	}
+	return orderResponse
+}
+
+func removeOrder(storeId string, orderId string) (orderResponse entities.OrderResponse) {
+	query := "DELETE FROM orders WHERE storeId='" + storeId + "' AND orderId='" + orderId + "';"
+	result := dbUtils.Update(query)
+	rowsAff, err := result.RowsAffected()
+	if err != nil {
+		fmt.Println("Error:", err)
+		orderResponse = entities.OrderResponse{}
+		errStatus := entities.Status{StatusCode: 2001, Message: "Failed while deleting the order", Result: "ERROR"}
+		orderResponse.Status = errStatus
+	} else if rowsAff == 1 {
+		fmt.Println("number of deleted records:" + strconv.FormatInt(rowsAff, 10))
+		orderResponse = entities.OrderResponse{}
+		status := entities.Status{StatusCode: 1001, Message: "Deleted successfully", Result: "SUCCESS"}
+		orderResponse.Status = status
+	} else {
+		fmt.Println("number of deleted records:" + strconv.FormatInt(rowsAff, 10))
+		orderResponse = entities.OrderResponse{}
+		status := entities.Status{StatusCode: 1001, Message: "Deleting Unsuccessfully", Result: "SUCCESS"}
+		orderResponse.Status = status
+	}
+	return
+}
+
+func getAllOrders(storeId string) entities.OrderResponse {
+	query := "SELECT id, storeId, productId, productName, eachPrice, quantity, totalPrice FROM orders WHERE storeId='" + storeId + "';"
+	result := dbUtils.Fetch(query)
+	orderResponse := entities.OrderResponse{}
+	var isOrderAvailable bool = false
+	var orderDetails [0]entities.OrderDetail
+	orderResponse.Slice = orderDetails[:]
+
+	for result.Next() {
+		orderDetail := entities.OrderDetail{}
+		err := result.Scan(&orderDetail.OrderId, &orderDetail.StoreId, &orderDetail.ProductId, &orderDetail.ProductName, &orderDetail.EachPrice, &orderDetail.Quantity, &orderDetail.TotalPrice)
+		if err != nil {
+			break
+		} else {
+			isOrderAvailable = true
+			orderResponse.Slice = append(orderResponse.Slice, orderDetail)
+		}
+	}
+
+	if isOrderAvailable {
+		status := entities.Status{StatusCode: 1002, Message: "Fetched order detail successfully", Result: "SUCCESS"}
+		orderResponse.Status = status
+	} else {
+		status := entities.Status{StatusCode: 2003, Message: "No order available", Result: "ERROR"}
 		orderResponse.Status = status
 	}
 	return orderResponse
