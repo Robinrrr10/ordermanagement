@@ -8,6 +8,13 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+func getDBUrl() string {
+	fmt.Println("Connecting to mysql...")
+	dbUrl := utils.DBuser + ":" + utils.DBpass + "@tcp(" + utils.DBhost + ":" + utils.DBport + ")/" + utils.DBname
+	fmt.Println("DB URL is:" + dbUrl)
+	return dbUrl
+}
+
 func Connect() {
 	fmt.Println("Connecting to mysql...")
 	dbUrl := utils.DBuser + ":" + utils.DBpass + "@tcp(" + utils.DBhost + ":" + utils.DBport + ")/" + utils.DBname
@@ -36,4 +43,32 @@ func Connect() {
 		}
 		fmt.Println("query result\n", id, stId, prId, prdName, ehPrc, qty, totPrc)
 	}
+}
+
+func Fetch(query string) *sql.Rows {
+	fmt.Println("Query is:", query)
+	db, err := sql.Open("mysql", getDBUrl())
+	defer db.Close()
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	result, err2 := db.Query(query)
+	if err2 != nil {
+		fmt.Println("Error:", err2)
+	}
+	return result
+}
+
+func Update(query string) sql.Result {
+	fmt.Println("Query is:", query)
+	db, err := sql.Open("mysql", getDBUrl())
+	defer db.Close()
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	result, err2 := db.Exec(query)
+	if err2 != nil {
+		fmt.Println("Error:", err2)
+	}
+	return result
 }
