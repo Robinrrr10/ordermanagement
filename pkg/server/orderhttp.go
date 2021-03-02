@@ -127,18 +127,19 @@ func modifyOrder(storeId string, orderId string, orderDetailRequest entities.Ord
 	query := "UPDATE orders SET productId=" + strconv.Itoa(orderDetailRequest.ProductId) + ", productName='" + orderDetailRequest.ProductName + "', eachPrice=" + strconv.FormatFloat(orderDetailRequest.EachPrice, 'f', 6, 64) + ", quantity=" + strconv.Itoa(orderDetailRequest.Quantity) + ", totalPrice=" + strconv.FormatFloat(orderDetailRequest.TotalPrice, 'f', 2, 64) + " WHERE storeId='" + storeId + "' AND id='" + orderId + "';"
 
 	result := dbUtils.Update(query)
-	id, err := result.LastInsertId()
+	id, err := result.RowsAffected()
 	if err != nil {
 		fmt.Println("Error:", err)
 		orderResponse = entities.OrderResponse{}
 		errStatus := entities.Status{StatusCode: 2001, Message: "Failed while creating the order", Result: "ERROR"}
 		orderResponse.Status = errStatus
 	} else {
-		fmt.Println("Inserted id is:" + strconv.FormatInt(id, 10))
+		fmt.Println("updated number of orders is:" + strconv.FormatInt(id, 10))
 		orderResponse = entities.OrderResponse{}
-		status := entities.Status{StatusCode: 1001, Message: "Created successfully", Result: "SUCCESS"}
+		status := entities.Status{StatusCode: 1001, Message: "Order updated successfully", Result: "SUCCESS"}
 		orderDetail := orderDetailRequest
-		orderDetail.OrderId = int(id)
+		orderDetail.OrderId = availableOrderDetail.Slice[0].OrderId
+		orderDetail.StoreId = availableOrderDetail.Slice[0].StoreId
 		var orderDetails [1]entities.OrderDetail
 		orderDetails[0] = orderDetail
 		orderResponse.Status = status
