@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"../utils"
+	"github.com/Robinrrr10/ordermanagement/pkg/utils"
 	_ "github.com/go-sql-driver/mysql"
 )
 
