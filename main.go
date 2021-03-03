@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"./cmd"
-	"./pkg/utils"
+	"github.com/Robinrrr10/ordermanagement/cmd"
+	"github.com/Robinrrr10/ordermanagement/pkg/utils"
 )
 
 func main() {
