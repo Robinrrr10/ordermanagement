@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Robinrrr10/ordermanagement/pkg/utils"
+	"../utils"
 )
 
 func HttpServer() {
