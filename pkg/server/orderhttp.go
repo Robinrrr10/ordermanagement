@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"../dbUtils"
-	"../entities"
+	"github.com/Robinrrr10/ordermanagement/dbUtils"
+	"github.com/Robinrrr10/ordermanagement/entities"
 )
 
 func StoreOrder(res http.ResponseWriter, req *http.Request) {

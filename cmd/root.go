@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"../pkg/server"
+	"github.com/Robinrrr10/ordermanagement/pkg/server"
 )
 
 func Start() {
