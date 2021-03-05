@@ -11,12 +11,12 @@ var ServerPort, DBhost, DBport, DBname, DBuser, DBpass string
 
 func ReadProperty() {
 	//fmt.Println("Read config values")
-	ServerPort = giveValue("server.port", "7878")
+	ServerPort = giveValue("server.port", "8080")
 	DBhost = giveValue("db.mysql.host", "localhost")
 	DBport = giveValue("db.mysql.port", "3306")
 	DBname = giveValue("db.mysql.dbname", "business")
-	DBuser = giveValue("db.mysql.user", "apper")
-	DBpass = giveValue("db.mysql.password", "app123")
+	DBuser = giveValue("db.mysql.user", "root")
+	DBpass = giveValue("db.mysql.password", "root")
 	//fmt.Println(ServerPort, DBhost, DBport, DBname, DBuser, DBpass)
 }
 
