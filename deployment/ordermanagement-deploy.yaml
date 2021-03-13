@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+     name: order-management-deploy
+     labels:
+          app: order-management-app
+spec:
+     replicas: 3
+     selector:
+          matchLabels:
+               app: order-management-app
+               tier: backend
+     template:
+          metadata:
+               labels:
+                    app: order-management-app
+                    tier: backend
+          spec:
+               containers:
+                    - name: order-management-container
+                      image: robinrrr10/ordermanagement
+                      env:
+                           - name: "server.port"
+                             value: "8080"
+                           - name: "db.mysql.host"
+                             value: "mysql-svc"
+                           - name: "db.mysql.port"
+                             value: "3306"
+                           - name: "db.mysql.dbname"
+                             value: "business"
+                           - name: "db.mysql.user"
+                             value: "root"
+                           - name: "db.mysql.password"
+                             value: "root"
+                      ports:
+                           - containerPort: 8080
